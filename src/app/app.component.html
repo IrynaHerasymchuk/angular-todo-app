@@ -1,5 +1,5 @@
 <div class="todoapp">
-  <h1 class="todoapp__title">todos</h1>
+  <h1 class="todoapp__title">To do list</h1>
 
   <div class="todoapp__content">
     <header class="todoapp__header">
@@ -15,51 +15,21 @@
     </header>
 
     <section class="todoapp__main">
-      <div class="todo completed">
+      <div 
+        *ngFor="let todo of todos; let todoIndex = index"
+        class="todo" 
+        [class.completed]="todo.completed"
+      >
         <label class="todo__status-label">
-          <input
+          <input 
             type="checkbox"
             class="todo__status"
-            checked
+            [(ngModel)]="todo.completed"
+            (ngModelChange)="countActiveTodos()"
           />
         </label>
 
-        <span class="todo__title">Completed Todo</span>
-
-        <button class="todo__remove">x</button>
-
-        <div class="modal overlay">
-          <div class="modal-background has-background-white-ter"></div>
-          <div class="loader"></div>
-        </div>
-      </div>
-
-      <div class="todo">
-        <label class="todo__status-label">
-          <input
-            type="checkbox"
-            class="todo__status"
-          />
-        </label>
-
-        <span class="todo__title">Not Completed Todo</span>
-        <button class="todo__remove">x</button>
-
-        <div class="modal overlay">
-          <div class="modal-background has-background-white-ter"></div>
-          <div class="loader"></div>
-        </div>
-      </div>
-
-      <div class="todo">
-        <label class="todo__status-label">
-          <input
-            type="checkbox"
-            class="todo__status"
-          />
-        </label>
-
-        <form>
+        <form *ngIf="isEditing; else todoTitleBlock">
           <input
             type="text"
             class="todo__title-field"
@@ -68,24 +38,12 @@
           />
         </form>
 
-        <div class="modal overlay">
-          <div class="modal-background has-background-white-ter"></div>
-          <div class="loader"></div>
-        </div>
-      </div>
+        <ng-template #todoTitleBlock>
+          <span class="todo__title">{{todo.title}}</span>
+          <button class="todo__remove" (click)="todos.splice(todoIndex, 1)">x</button>
+        </ng-template>
 
-      <div class="todo">
-        <label class="todo__status-label">
-          <input
-            type="checkbox"
-            class="todo__status"
-          />
-        </label>
-
-        <span class="todo__title">Todo is being saved now</span>
-        <button class="todo__remove">x</button>
-
-        <div class="modal overlay is-active">
+        <div class="modal overlay" [class.is-active]="isSaving">
           <div class="modal-background has-background-white-ter"></div>
           <div class="loader"></div>
         </div>
@@ -94,7 +52,7 @@
 
     <footer class="todoapp__footer">
       <span class="todo-count">
-        3 items left
+        {{ activeTodos.length }} items left
       </span>
 
       <nav class="filter">
