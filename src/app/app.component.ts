@@ -18,11 +18,10 @@ export class AppComponent implements OnInit {
     { id: 3, title: 'React', completed: false },
     { id: 4, title: 'Angular', completed: false },
   ];
-
-  title = 'angular-todo-app';
   isEditing = false;
   isSaving = false;
   activeTodos: Todo[] = [];
+  todoTitle = '';
 
   ngOnInit() {
     this.countActiveTodos();
@@ -30,5 +29,21 @@ export class AppComponent implements OnInit {
 
   countActiveTodos() {
     this.activeTodos = this.todos.filter(todo => !todo.completed);
+  }
+
+  addTodo() {
+    if (!this.todoTitle) {
+      return;
+    }
+
+    const newTodo: Todo = {
+      id: Date.now(),
+      title: this.todoTitle,
+      completed: false,
+    }
+
+    this.todos.push(newTodo);
+    this.todoTitle = '';
+    this.countActiveTodos();
   }
 }
