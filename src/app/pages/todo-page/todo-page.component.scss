@@ -1,0 +1,13 @@
+:host {
+  ::ng-deep {
+    .mat-spinner circle {   
+      stroke: rgb(243, 224, 224);
+    }
+  }
+}
+
+.spinner-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0;
+}

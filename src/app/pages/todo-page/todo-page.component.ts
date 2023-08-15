@@ -1,54 +1,64 @@
 import { Component, OnInit } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ActivatedRoute } from '@angular/router';
+import { distinctUntilChanged, map, switchMap, tap } from 'rxjs';
 import { MessageService } from 'src/app/services/message.service';
 import { TodoService } from 'src/app/services/todo.service';
+import { Status } from 'src/app/types/status';
 import { Todo } from 'src/app/types/todo';
 
-@UntilDestroy()
 @Component({
   selector: 'app-todo-page',
   templateUrl: './todo-page.component.html',
   styleUrls: ['./todo-page.component.scss']
 })
 export class TodoPageComponent implements OnInit {
-  _todos: Todo[] = [];
-  activeTodos: Todo[] = [];
+  todos$ = this.todoService.todos$;
+  activeTodos$ = this.todos$.pipe(
+    distinctUntilChanged(),
+    map(todos => todos.filter(todo => !todo.completed))
+  );
+  activeCount$ = this.activeTodos$.pipe(
+    map(todos => todos.length)
+  );
+  completedTodos$ = this.todos$.pipe(
+    map(todos => todos.filter(todo => todo.completed))
+  );
+  visibleTodos$ = this.route.params.pipe(
+    switchMap(params => {
+      switch (params['status'] as Status) {
+        case 'active':
+          return this.activeTodos$;
 
-  get todos() {
-    return this._todos;
-  }
-
-  set todos(todos: Todo[]) {
-    if (todos === this._todos) {
-      return;
-    }
-
-    this._todos = todos;
-    this.activeTodos = this._todos.filter(todo => !todo.completed);
-  }
+        case 'completed':
+          return this.completedTodos$;
+      
+        default:
+          return this.todos$;
+      }
+    })
+  )
+  loading = true;
 
   constructor(
     private todoService: TodoService,
     private messageService: MessageService,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
-    this.todoService.todos$
-      .pipe(untilDestroyed(this))
-      .subscribe((todos) => {
-        this.todos = todos;
-      });
-
-    this.todoService.loadTodos()
-      .pipe(untilDestroyed(this))
-      .subscribe({
+    this.todoService.loadTodos().pipe(
+      tap(todos => {
+        if (todos) {
+          this.loading = false;
+        }
+      })
+    ).subscribe({
         error: () => this.messageService.showMessage('Unable to load todos'),
       });
   }
 
   addTodo(newTodoTitle: string) {
     this.todoService.createTodo(newTodoTitle)
-      .pipe(untilDestroyed(this))
       .subscribe({
         error: () => this.messageService.showMessage('Unable to add a todo'),
       });
@@ -56,7 +66,6 @@ export class TodoPageComponent implements OnInit {
 
   renameTodo(todo: Todo, newTodoTitle: string) {
     this.todoService.updateTodo({ ...todo, title: newTodoTitle })
-      .pipe(untilDestroyed(this))
       .subscribe({
         error: () => this.messageService.showMessage('Unable to rename a todo'),
       });
@@ -64,7 +73,6 @@ export class TodoPageComponent implements OnInit {
 
   toggleTodo(todo: Todo) {
     this.todoService.updateTodo({ ...todo, completed: !todo.completed })
-      .pipe(untilDestroyed(this))
       .subscribe({
         error: () => this.messageService.showMessage('Unable to toggle a todo'),
       });
@@ -72,9 +80,15 @@ export class TodoPageComponent implements OnInit {
 
   deleteTodo(todoId: number) {
     this.todoService.deleteTodo(todoId)
-      .pipe(untilDestroyed(this))
       .subscribe({
         error: () => this.messageService.showMessage('Unable to delete a todo'),
+      });
+  }
+
+  clearCompletedTodos() {
+    this.todoService.deleteCompletedTodos()
+      .subscribe({
+        error: () => this.messageService.showMessage('Unable to clear todos'),
       });
   }
 

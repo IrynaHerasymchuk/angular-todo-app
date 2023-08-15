@@ -8,48 +8,40 @@
     </header>
 
     <section class="todoapp__main">
-      <app-todo 
-        *ngFor="let todo of todos; let todoIndex = index; trackBy: trackById" 
-        [todo]="todo"
-        (deleteTodo)="deleteTodo(todo.id)"
-        (toggleTodo)="toggleTodo(todo)"
-        (renameTodo)="renameTodo(todo, $event)"
-      ></app-todo>
+      <div *ngIf="loading" class="spinner-wrapper">
+        <mat-spinner class="mat-spinner" [diameter]="40"></mat-spinner>
+      </div>
+
+      <ng-container *ngIf="!loading && (visibleTodos$ | async) as visibleTodos">
+        <p class="todoapp__todo-info" *ngIf="!visibleTodos.length">No todos yet!</p>
+
+        <app-todo
+          *ngFor="let todo of visibleTodos; let todoIndex = index; trackBy: trackById"
+          [todo]="todo"
+          (deleteTodo)="deleteTodo(todo.id)"
+          (toggleTodo)="toggleTodo(todo)"
+          (renameTodo)="renameTodo(todo, $event)"
+        ></app-todo>
+      </ng-container>
     </section>
 
     <footer class="todoapp__footer">
       <span class="todo-count">
-        {{ activeTodos.length }} items left
+        {{ activeCount$ | async }} items left
       </span>
 
-      <nav class="filter">
-        <a
-          href="#/"
-          class="filter__link selected"
-        >
-          All
-        </a>
+      <app-todo-filter></app-todo-filter>
 
-        <a
-          href="#/active"
-          class="filter__link"
-        >
-          Active
-        </a>
-
-        <a
-          href="#/completed"
-          class="filter__link"
-        >
-          Completed
-        </a>
-      </nav>
-
-      <button class="todoapp__clear-completed">
+      <button 
+        class="todoapp__clear-completed"
+        (click)="clearCompletedTodos()"
+      >
         Clear completed
       </button>
     </footer>
   </div>
+
+  <p class="todoapp__info">Double-click to edit a todo</p>
 
   <app-message></app-message>
 </div>
